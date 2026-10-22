@@ -12,7 +12,7 @@ The repository is related to the original FreeFEM implementation available at:
 
 <https://github.com/samuel-amstutz/incompatibility>
 
-The present code is not a literal line-by-line translation of the FreeFEM files. Instead, it gives a Firedrake implementation of the same family of numerical examples, using Firedrake finite element spaces, Firedrake mesh handling, and Firedrake output tools.
+The present code is not a literal line-by-line translation of the FreeFEM files. Instead, it gives a Firedrake implementation of the same family of numerical examples.
 
 ## Mathematical background
 
@@ -55,7 +55,7 @@ The code also includes an internal scalar variable `theta`, called the compatibi
 ```text
 .
 ├── README.md
-├── hct_traction.py
+├── hct.py
 ├── incomp.sh
 ├── .gitignore
 └── meshes/
@@ -66,10 +66,10 @@ The code also includes an internal scalar variable `theta`, called the compatibi
 The main point of the Firedrake implementation is that the three numerical examples are handled by a single driver script:
 
 ```text
-hct_traction.py
+hct.py
 ```
 
-Although the file is named after the traction problem, it contains implementations of the three configurations:
+The driver implements three configurations:
 
 ```text
 traction
@@ -88,18 +88,16 @@ The correspondence with the original FreeFEM repository is:
 ```text
 Original FreeFEM file        Firedrake command
 ---------------------------------------------------------------
-traction.edp                 python3 hct_traction.py --problem traction
-necking.edp                  python3 hct_traction.py --problem necking
-inhomogeneity.edp            python3 hct_traction.py --problem inclusion
+traction.edp                 python3 hct.py --problem traction
+necking.edp                  python3 hct.py --problem necking
+inhomogeneity.edp            python3 hct.py --problem inclusion
 ```
-
-Thus, despite the name `hct_traction.py`, the Firedrake code is not limited to the traction example. The same Python file also includes the necking and inclusion/inhomogeneity configurations.
 
 ## Main files
 
-### `hct_traction.py`
+### `hct.py`
 
-Main Firedrake script.
+Main Firedrake driver for the traction, necking, and inclusion examples, using Hsieh-Clough-Tocher (HCT) elements for the incompatible strain by default.
 
 This file contains the numerical implementation of the model. It defines:
 
@@ -135,9 +133,9 @@ Firedrake option        Mathematical / numerical example
 Typical command-line usage is:
 
 ```bash
-python3 hct_traction.py --problem traction
-python3 hct_traction.py --problem necking
-python3 hct_traction.py --problem inclusion
+python3 hct.py --problem traction
+python3 hct.py --problem necking
+python3 hct.py --problem inclusion
 ```
 
 The script also accepts several options:
@@ -159,7 +157,7 @@ The script also accepts several options:
 For example:
 
 ```bash
-python3 hct_traction.py \
+python3 hct.py \
     --problem traction \
     --clscale 0.04 \
     --n_iterates 20 \
@@ -169,20 +167,11 @@ python3 hct_traction.py \
 
 The option `-options_left 0` is passed through to PETSc/Firedrake; the script is written to tolerate this extra argument.
 
-The incompatible strain can be discretized using either Hsieh-Clough-Tocher elements or Regge elements through:
+The documented examples discretize the incompatible strain using Hsieh-Clough-Tocher (HCT) elements, selected by default or explicitly through:
 
 ```bash
 --incomp_strain_elt HCT
---incomp_strain_elt Regge
 ```
-
-The default is:
-
-```text
---incomp_strain_elt HCT
-```
-
-The HCT formulation is the main implementation currently used by the example runs. The Regge option is present in the code, but some comments in the script indicate that parts of the Regge/DG formulation are still experimental or to be completed.
 
 The update of `theta` can be performed with either:
 
@@ -220,11 +209,11 @@ chmod +x incomp.sh
 The script currently contains runs of the form:
 
 ```bash
-python3 hct_traction.py --problem "traction"  --clscale 0.04   --n_iterates 20 --scale_displacement 10.0 -options_left 0
-python3 hct_traction.py --problem "necking"   --clscale 0.018  --n_iterates 50 --scale_displacement 5    -options_left 0
-python3 hct_traction.py --problem "necking"   --clscale 0.0132 --n_iterates 50 --scale_displacement 5    -options_left 0
-python3 hct_traction.py --problem "inclusion" --clscale 0.018  --n_iterates 10                         -options_left 0
-python3 hct_traction.py --problem "inclusion" --clscale 0.1    --n_iterates 10                         -options_left 0
+python3 hct.py --problem "traction"  --clscale 0.04   --n_iterates 20 --scale_displacement 10.0 -options_left 0
+python3 hct.py --problem "necking"   --clscale 0.018  --n_iterates 50 --scale_displacement 5    -options_left 0
+python3 hct.py --problem "necking"   --clscale 0.0132 --n_iterates 50 --scale_displacement 5    -options_left 0
+python3 hct.py --problem "inclusion" --clscale 0.018  --n_iterates 10                         -options_left 0
+python3 hct.py --problem "inclusion" --clscale 0.1    --n_iterates 10                         -options_left 0
 ```
 
 ### `meshes/`
@@ -308,7 +297,7 @@ necking.edp
 inhomogeneity.edp
 ```
 
-In this Firedrake repository, the corresponding examples are handled by the single driver script `hct_traction.py` through the option `--problem`:
+In this Firedrake repository, the corresponding examples are handled by the single driver script `hct.py` through the option `--problem`:
 
 ```text
 FreeFEM file              Firedrake problem option
@@ -346,7 +335,7 @@ A typical workflow is:
 ```bash
 source /path/to/firedrake/bin/activate
 cd /path/to/Incompatible-Elasticity
-python3 hct_traction.py --problem traction --clscale 0.1 -options_left 0
+python3 hct.py --problem traction --clscale 0.1 -options_left 0
 ```
 
 Replace `/path/to/firedrake` by the location of your Firedrake installation.
@@ -359,7 +348,6 @@ The code writes visualization output using Firedrake's `VTKFile`. Output folders
 HCT_traction/
 HCT_necking/
 HCT_inclusion/
-Regge_traction/
 ```
 
 The `.pvd` and `.vtu` files can be opened with ParaView.
@@ -395,7 +383,7 @@ HCT_traction/energy.pdf
 ### Perforated plate under uniaxial traction
 
 ```bash
-python3 hct_traction.py \
+python3 hct.py \
     --problem traction \
     --clscale 0.04 \
     --n_iterates 20 \
@@ -406,7 +394,7 @@ python3 hct_traction.py \
 ### Necking example
 
 ```bash
-python3 hct_traction.py \
+python3 hct.py \
     --problem necking \
     --clscale 0.018 \
     --n_iterates 50 \
@@ -414,13 +402,10 @@ python3 hct_traction.py \
     -options_left 0
 ```
 
-
-```
-
 ### Inclusion / inhomogeneity example
 
 ```bash
-python3 hct_traction.py \
+python3 hct.py \
     --problem inclusion \
     --clscale 0.1 \
     --n_iterates 10 \
@@ -448,4 +433,4 @@ The original forked implementation from which this code was adapted was written 
 
 This is a research-code repository. The code is intended for experimentation, comparison with the FreeFEM implementation, and further development of Firedrake-based formulations for incompatible elasticity and incompatibility-driven plasticity.
 
-The HCT-based implementation is the main current path. The Regge option is present as an alternative finite element choice, but should be treated as experimental.
+The HCT-based implementation is the main current path.
